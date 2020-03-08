@@ -1,0 +1,62 @@
+P       ->  int main ( ) { D S }
+D       ->  Y identifier ;
+D       ->  Y identifier D* ;
+D       ->  Y identifier D' ;
+D       ->  Y identifier D* D' ;
+D'      ->  , identifier
+D'      ->  , identifier D*
+D*      ->  [ int_literal ]
+D*      ->  [ int_literal ] D*
+S       ->  A
+S       ->  IF
+S       ->  W
+S       ->  { S }
+A       ->  identifier = E ;
+A       ->  identifier A* = E ;
+A*      ->  [ E ]
+A*      ->  [ E ] A*
+IF      ->  if ( E ) S
+IF      ->  if ( E ) S else S
+W       ->  while ( E ) S
+E       ->  C
+E       ->  C || E
+C       ->  EQ
+C       ->  EQ && C
+EQ      ->  R
+EQ      ->  R R*
+R*      ->  EN0 R
+R*      ->  EN0 R*
+EN0     ->  equality
+EN0     ->  inequality
+R       ->  A'
+R       ->  A' R'
+R'      ->  RO R
+RO      ->  less
+RO      ->  less_equal
+RO      ->  greater
+RO      ->  greater_equal
+A'      ->  T
+A'      ->  T T*
+T*      ->  ASO A'
+ASO     ->  add
+ASO     ->  subtract
+T       ->  F
+T       ->  F MDO T
+MDO     ->  multiply
+MDO     ->  divide
+F       ->  identifier
+F       ->  identifier F*
+F*      ->  [ E ]
+F*      ->  [ E ] F*
+F       ->  L
+F       ->  ( E )
+Y       ->  int_type
+Y       ->  bool_type
+Y       ->  float_type
+Y       ->  char_type
+L       ->  int_literal
+L       ->  BL
+L       ->  float_literal
+L       ->  char_literal
+BL      ->  true
+BL      ->  false
