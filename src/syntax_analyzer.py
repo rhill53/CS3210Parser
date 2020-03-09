@@ -9,7 +9,7 @@ DEBUG = True
 
 # all char classes
 class CharClass(IntEnum):
-    EOF        = 0
+    EOF        = -1
     LETTER     = 1
     DIGIT      = 2
     OPERATOR   = 3
@@ -21,7 +21,7 @@ class CharClass(IntEnum):
 
 # all tokens
 class Token(IntEnum):
-    EOF             = 0
+    EOF             = -1
     INT_TYPE        = 1
     MAIN            = 2
     OPEN_PAR        = 3
@@ -412,6 +412,8 @@ def parse(input, grammar, actions, gotos):
             return newTree
 
 # main
+
+
 if __name__ == "__main__":
 
     # checks if source file was passed and if it exists
@@ -432,16 +434,16 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # main loop
-    # output = []
-    # while True:
-    #     input, lexeme, token = lex(input)
-    #     if token == Token.EOF:
-    #         break
-    #     output.append((lexeme, token))
+    output = []
+    while True:
+        input, lexeme, token = lex(input)
+        if token == Token.EOF:
+            break
+        output.append((lexeme, token))
 
     # prints the output
-    # for (lexeme, token) in output:
-    #     print(lexeme, token)
+    for (lexeme, token) in output:
+        print(lexeme, token)
 
     # load grammar
     try:
@@ -470,8 +472,8 @@ if __name__ == "__main__":
             raise IOError(errorMessage(5))
         actions, gotos = loadTable(slrTableFile)
         slrTableFile.close()
-        # printActions(actions)
-        # printGotos(gotos)
+        printActions(actions)
+        printGotos(gotos)
     except Exception as ex:
         print(ex)
         sys.exit(1)
