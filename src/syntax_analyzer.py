@@ -25,8 +25,9 @@ class CharClass(IntEnum):
     QUOTE      = 5
     BLANK      = 6
     DELIMITER  = 7
-    ASSIGNMENT = 8
-    OTHER      = 9
+    RELATION   = 8
+    ASSIGNMENT = 9
+    OTHER      = 10
 
 # all tokens
 class Token(IntEnum):
@@ -167,6 +168,8 @@ lookupToken = {
     "]": Token.CLOSE_BRACKET,
     "{": Token.OPEN_CURLY,
     "}": Token.CLOSE_CURLY,
+    # ".": Token.PERIOD,
+    # "'": Token.QUOTE,
     ",": Token.COMMA,
     "=": Token.ASSIGNMENT,
     ";": Token.SEMICOLON,
@@ -192,11 +195,13 @@ lookupToken = {
     "false": Token.FALSE
 }
 
+
+
 # reads the next char from input and returns its class
-def getChar(input):
-    if len(input) == 0:
+def getChar(inpt):
+    if len(inpt) == 0:
         return (None, CharClass.EOF)
-    c = input[0].lower()
+    c = inpt[0].lower()
     if c.isalpha():
         return (c, CharClass.LETTER)
     if c.isdigit():
@@ -205,94 +210,112 @@ def getChar(input):
     #     return (c, CharClass.QUOTE)
     if c in ['+', '-', '*', '/']:
         return (c, CharClass.OPERATOR)
-    if c in ['.', ';', ',']:
+    if c in ['.', ';', ',', "'"]:
         return (c, CharClass.PUNCTUATOR)
     if c in [' ', '\n', '\t']:
         return (c, CharClass.BLANK)
     if c in ['(', ')', '[', ']', '{', '}']:
         return (c, CharClass.DELIMITER)
+    if c in ['<', '<=', '>', '>=', '==', '!=']:
+        return (c, CharClass.RELATION)
     if c in ['=']:
         return (c, CharClass.ASSIGNMENT)
     return (c, CharClass.OTHER)
 
 # calls getChar and addChar until it returns a non-blank
-def getNonBlank(input):
+def getNonBlank(inpt):
     ignore = ""
     while True:
-        c, charClass = getChar(input)
+        c, charClass = getChar(inpt)
         if charClass == CharClass.BLANK:
-            input, ignore = addChar(input, ignore)
+            inpt, ignore = addChar(inpt, ignore)
         else:
-            return input
+            return inpt
 
 # adds the next char from input to lexeme, advancing the input by one char
-def addChar(input, lexeme):
-    if len(input) > 0:
-        lexeme += input[0]
-        input = input[1:]
-    return (input, lexeme)
+def addChar(inpt, lexeme):
+    if len(inpt) > 0:
+        lexeme += inpt[0]
+        inpt = inpt[1:]
+    return (inpt, lexeme)
 
 # returns the next (lexeme, token) pair or ("", EOF) if EOF is reached
-def lex(input):
-    input = getNonBlank(input)
+def lex(inpt):
+    inpt = getNonBlank(inpt)
 
-    c, charClass = getChar(input)
+    c, charClass = getChar(inpt)
     lexeme = ""
 
     # checks EOF
     if charClass == CharClass.EOF:
-        return (input, lexeme, Token.EOF)
+        return (inpt, lexeme, Token.EOF)
 
     # reads an identifier
     if charClass == CharClass.LETTER:
-        input, lexeme = addChar(input, lexeme)
+        inpt, lexeme = addChar(inpt, lexeme)
         while True:
-            c, charClass = getChar(input)
+            c, charClass = getChar(inpt)
             if charClass == CharClass.LETTER or charClass == CharClass.DIGIT:
-                input, lexeme = addChar(input, lexeme)
+                inpt, lexeme = addChar(inpt, lexeme)
             else:
-                return (input, lexeme, Token.IDENTIFIER)
+                if lexeme in lookupToken:
+                    return (inpt, lexeme, lookupToken[lexeme])
+                return (inpt, lexeme, Token.IDENTIFIER)
 
     # reads digits
     if charClass == CharClass.DIGIT:
-        input, lexeme = addChar(input, lexeme)
+        inpt, lexeme = addChar(inpt, lexeme)
         while True:
-            c, charClass = getChar(input)
+            c, charClass = getChar(inpt)
             if charClass == CharClass.DIGIT:
-                input, lexeme = addChar(input, lexeme)
+                inpt, lexeme = addChar(inpt, lexeme)
+            elif charClass == CharClass.PUNCTUATOR:
+                inpt, lexeme = addChar(inpt, lexeme)
             else:
-                return (input, lexeme, Token.INT_LITERAL)
+                return (inpt, lexeme, Token.INT_LITERAL)
 
     # reads operator
     if charClass == CharClass.OPERATOR:
-        input, lexeme = addChar(input, lexeme)
+        inpt, lexeme = addChar(inpt, lexeme)
         if lexeme in lookupToken:
-            return (input, lexeme, lookupToken[lexeme])
+            return (inpt, lexeme, lookupToken[lexeme])
 
-    # reads parenthesis
+    # reads parenthesis, brackets, braces and excellent novels
     if charClass == CharClass.DELIMITER and (c == '(' or c == ')' or c == '{' or c == '}' or c == '[' or c == ']'):
-        input, lexeme = addChar(input, lexeme)
-        return (input, lexeme, lookupToken[lexeme])
+        inpt, lexeme = addChar(inpt, lexeme)
+        return (inpt, lexeme, lookupToken[lexeme])
 
 
     # reads punctuators
     if charClass == CharClass.PUNCTUATOR and (c == ',' or c == ';' or c == '.'):
-        input, lexeme = addChar(input, lexeme)
-        return (input, lexeme, lookupToken[lexeme])
+        inpt, lexeme = addChar(inpt, lexeme)
+        return (inpt, lexeme, lookupToken[lexeme])
+
+    if c == "'":
+        inpt = getNonBlank(inpt)
+        inpt, lexeme = addChar(inpt, lexeme)
+        trim = getNonBlank(inpt) # cuts off trailing ' to prevent double evaluation
+        return (trim, lexeme, Token.CHAR_LITERAL)
+
 
     if charClass == CharClass.ASSIGNMENT:
-        input, lexeme = addChar(input, lexeme)
+        inpt, lexeme = addChar(inpt, lexeme)
         if lexeme in lookupToken:
-            return (input, lexeme, lookupToken[lexeme])
+            return (inpt, lexeme, lookupToken[lexeme])
+
+    if charClass == CharClass.RELATION:
+        inpt, lexeme = addChar(inpt, lexeme)
+        if lexeme in lookupToken:
+            return (inpt, lexeme, lookupToken[lexeme])
 
     # anything else, raises an error
-    print(input, charClass, c)
+    print(inpt, charClass, c)
     raise Exception(errorMessage(3))
 
 # reads the given input and returns the grammar as a list of productions
-def loadGrammar(input):
+def loadGrammar(inpt):
     grammar = []
-    for line in input:
+    for line in inpt:
         grammar.append(line.strip())
     return grammar
 
@@ -313,17 +336,17 @@ def printGrammar(grammar):
         i += 1
 
 # reads the given input containing an SLR parsing table and returns the "actions" and "gotos" as dictionaries
-def loadTable(input):
+def loadTable(inpt):
     actions = {}
     gotos = {}
-    header = input.readline().strip().split(",")
+    header = inpt.readline().strip().split(",")
     end = header.index('$')
     tokens = []
     for field in header[1:end]:
         tokens.append(int(field))
     tokens.append(int(Token.EOF)) # '$' is replaced by token -1
     variables = header[end + 1:]
-    for line in input:
+    for line in inpt:
         row = line.strip().split(",")
         state = int(row[0])
         for i in range(len(tokens)):
@@ -354,8 +377,8 @@ def printGotos(gotos):
         print(key, end = " -> ")
         print(gotos[key])
 
-# given an input (source program), a grammar, actions, and gotos, returns the corresponding parse tree or raise an exception if syntax errors were found
-def parse(input, grammar, actions, gotos):
+# given an inpt (source program), a grammar, actions, and gotos, returns the corresponding parse tree or raise an exception if syntax errors were found
+def parse(inpt, grammar, actions, gotos):
 
     # TODOd: create a stack of trees
     trees = []
@@ -373,7 +396,7 @@ def parse(input, grammar, actions, gotos):
 
         # get lex info ONLY if token is None
         if token is None:
-            input, lexeme, token = lex(input)
+            inpt, lexeme, token = lex(inpt)
 
         # TODOd: get current state
         state = stack[-1]
@@ -411,7 +434,7 @@ def parse(input, grammar, actions, gotos):
             tree.data = lexeme
             trees.append(tree)
 
-            # set token to None to acknowledge reading the input
+            # set token to None to acknowledge reading the inpt
             token = None
 
         # TODO: implement the reduce operation
@@ -528,8 +551,8 @@ if __name__ == "__main__":
 
     # parse the code
     try:
-        tree = parse(input, grammar, actions, gotos)
-        print("Input is syntactically correct!")
+        tree = parse(inpt, grammar, actions, gotos)
+        print("inpt is syntactically correct!")
         print("Parse Tree:")
         tree.print("")
     except Exception as ex:
