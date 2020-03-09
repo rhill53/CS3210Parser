@@ -1,3 +1,11 @@
+"""
+CS3210 Programming Assignment 1
+Authors:
+    Thyago Mota (original author of code below)
+    Robb Hill (edited code below)
+"""
+
+
 # CS 3210 - Principles of Programming Languages - Spring 2020
 # A bottom-up parser for an expression
 
@@ -9,7 +17,7 @@ DEBUG = True
 
 # all char classes
 class CharClass(IntEnum):
-    EOF        = -1
+    EOF        = 0
     LETTER     = 1
     DIGIT      = 2
     OPERATOR   = 3
@@ -17,11 +25,12 @@ class CharClass(IntEnum):
     QUOTE      = 5
     BLANK      = 6
     DELIMITER  = 7
-    OTHER      = 8
+    ASSIGNMENT = 8
+    OTHER      = 9
 
 # all tokens
 class Token(IntEnum):
-    EOF             = -1
+    EOF             = 0
     INT_TYPE        = 1
     MAIN            = 2
     OPEN_PAR        = 3
@@ -149,13 +158,38 @@ def getErrorCode(state):
 
 # lexeme to token conversion map
 lookupToken = {
-    "$"         : Token.EOF,
-    "+"         : Token.ADD,
-    "-"         : Token.SUBTRACT,
-    "*"         : Token.MULTIPLY,
-    "/"         : Token.DIVIDE,
-    "("         : Token.OPEN_PAR,
-    ")"         : Token.CLOSE_PAR
+    " ": Token.EOF,
+    "int": Token.INT_TYPE,
+    "main": Token.MAIN,
+    "(": Token.OPEN_PAR,
+    ")": Token.CLOSE_PAR,
+    "[": Token.OPEN_BRACKET,
+    "]": Token.CLOSE_BRACKET,
+    "{": Token.OPEN_CURLY,
+    "}": Token.CLOSE_CURLY,
+    ",": Token.COMMA,
+    "=": Token.ASSIGNMENT,
+    ";": Token.SEMICOLON,
+    "if": Token.IF,
+    "else": Token.ELSE,
+    "while": Token.WHILE,
+    "||": Token.OR,
+    "&&": Token.AND,
+    "==": Token.EQUALITY,
+    "!=": Token.INEQUALITY,
+    "<": Token.LESS,
+    "<=": Token.LESS_EQUAL,
+    ">": Token.GREATER,
+    ">=": Token.GREATER_EQUAL,
+    "+": Token.ADD,
+    "-": Token.SUBTRACT,
+    "*": Token.MULTIPLY,
+    "/": Token.DIVIDE,
+    "bool": Token.BOOL_TYPE,
+    "float": Token.FLOAT_TYPE,
+    "char": Token.CHAR_TYPE,
+    "true": Token.TRUE,
+    "false": Token.FALSE
 }
 
 # reads the next char from input and returns its class
@@ -167,16 +201,18 @@ def getChar(input):
         return (c, CharClass.LETTER)
     if c.isdigit():
         return (c, CharClass.DIGIT)
-    if c == '"':
-        return (c, CharClass.QUOTE)
+    # if c == '"':
+    #     return (c, CharClass.QUOTE)
     if c in ['+', '-', '*', '/']:
         return (c, CharClass.OPERATOR)
-    if c in ['.', ';']:
+    if c in ['.', ';', ',']:
         return (c, CharClass.PUNCTUATOR)
     if c in [' ', '\n', '\t']:
         return (c, CharClass.BLANK)
-    if c in ['(', ')']:
+    if c in ['(', ')', '[', ']', '{', '}']:
         return (c, CharClass.DELIMITER)
+    if c in ['=']:
+        return (c, CharClass.ASSIGNMENT)
     return (c, CharClass.OTHER)
 
 # calls getChar and addChar until it returns a non-blank
@@ -225,7 +261,7 @@ def lex(input):
             if charClass == CharClass.DIGIT:
                 input, lexeme = addChar(input, lexeme)
             else:
-                return (input, lexeme, Token.LITERAL)
+                return (input, lexeme, Token.INT_LITERAL)
 
     # reads operator
     if charClass == CharClass.OPERATOR:
@@ -234,11 +270,23 @@ def lex(input):
             return (input, lexeme, lookupToken[lexeme])
 
     # reads parenthesis
-    if charClass == CharClass.DELIMITER and (c == '(' or c == ')'):
+    if charClass == CharClass.DELIMITER and (c == '(' or c == ')' or c == '{' or c == '}' or c == '[' or c == ']'):
         input, lexeme = addChar(input, lexeme)
         return (input, lexeme, lookupToken[lexeme])
 
+
+    # reads punctuators
+    if charClass == CharClass.PUNCTUATOR and (c == ',' or c == ';' or c == '.'):
+        input, lexeme = addChar(input, lexeme)
+        return (input, lexeme, lookupToken[lexeme])
+
+    if charClass == CharClass.ASSIGNMENT:
+        input, lexeme = addChar(input, lexeme)
+        if lexeme in lookupToken:
+            return (input, lexeme, lookupToken[lexeme])
+
     # anything else, raises an error
+    print(input, charClass, c)
     raise Exception(errorMessage(3))
 
 # reads the given input and returns the grammar as a list of productions
@@ -269,7 +317,7 @@ def loadTable(input):
     actions = {}
     gotos = {}
     header = input.readline().strip().split(",")
-    end = header.index("$")
+    end = header.index('$')
     tokens = []
     for field in header[1:end]:
         tokens.append(int(field))
@@ -345,7 +393,7 @@ def parse(input, grammar, actions, gotos):
             print("action:",                   end = " ")
             print(action)
 
-        # if action is undefined, raise an approriate error
+        # if action is undefined, raise an appropriate error
         if action is None:
             errorCode = getErrorCode(state)
             raise Exception(errorMessage(errorCode))
@@ -427,7 +475,7 @@ if __name__ == "__main__":
             pass
         if not sourceFile:
             raise IOError(errorMessage(2))
-        input = sourceFile.read()
+        inpt = sourceFile.read()
         sourceFile.close()
     except Exception as ex:
         print(ex)
@@ -436,14 +484,14 @@ if __name__ == "__main__":
     # main loop
     output = []
     while True:
-        input, lexeme, token = lex(input)
+        inpt, lexeme, token = lex(inpt)
         if token == Token.EOF:
             break
         output.append((lexeme, token))
 
     # prints the output
-    for (lexeme, token) in output:
-        print(lexeme, token)
+    # for (lexeme, token) in output:
+    #     print(lexeme, token)
 
     # load grammar
     try:
@@ -456,7 +504,7 @@ if __name__ == "__main__":
             raise IOError(errorMessage(4))
         grammar = loadGrammar(grammarFile)
         grammarFile.close()
-        printGrammar(grammar)
+        # printGrammar(grammar)
     except Exception as ex:
         print(ex)
         sys.exit(1)
@@ -472,8 +520,8 @@ if __name__ == "__main__":
             raise IOError(errorMessage(5))
         actions, gotos = loadTable(slrTableFile)
         slrTableFile.close()
-        printActions(actions)
-        printGotos(gotos)
+        # printActions(actions)
+        # printGotos(gotos)
     except Exception as ex:
         print(ex)
         sys.exit(1)
