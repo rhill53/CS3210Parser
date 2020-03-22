@@ -50,7 +50,7 @@ F*      ->  [ E ]
 F*      ->  [ E ] F*
 F       ->  L
 F       ->  ( E )
-Y       ->  int_type
+Y       ->  int
 Y       ->  bool_type
 Y       ->  float_type
 Y       ->  char_type
