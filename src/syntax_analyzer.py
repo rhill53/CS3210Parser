@@ -159,7 +159,7 @@ def getErrorCode(state):
 
 # lexeme to token conversion map
 lookupToken = {
-    " ": Token.EOF,
+    "": Token.EOF,
     "int": Token.INT_TYPE,
     "main": Token.MAIN,
     "(": Token.OPEN_PAR,
@@ -513,8 +513,8 @@ if __name__ == "__main__":
         output.append((lexeme, token))
 
     # prints the output
-    # for (lexeme, token) in output:
-    #     print(lexeme, token)
+    for (lexeme, token) in output:
+        print(lexeme, token)
 
     # load grammar
     try:
@@ -527,7 +527,7 @@ if __name__ == "__main__":
             raise IOError(errorMessage(4))
         grammar = loadGrammar(grammarFile)
         grammarFile.close()
-        # printGrammar(grammar)
+        printGrammar(grammar)
     except Exception as ex:
         print(ex)
         sys.exit(1)
@@ -543,8 +543,8 @@ if __name__ == "__main__":
             raise IOError(errorMessage(5))
         actions, gotos = loadTable(slrTableFile)
         slrTableFile.close()
-        # printActions(actions)
-        # printGotos(gotos)
+        printActions(actions)
+        printGotos(gotos)
     except Exception as ex:
         print(ex)
         sys.exit(1)

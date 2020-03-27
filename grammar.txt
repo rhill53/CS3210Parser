@@ -24,10 +24,10 @@ C       ->  EQ
 C       ->  EQ && C
 EQ      ->  R
 EQ      ->  R R*
-R*      ->  EN0 R
-R*      ->  EN0 R*
-EN0     ->  equality
-EN0     ->  inequality
+R*      ->  ENO R
+R*      ->  ENO R*
+ENO     ->  equality
+ENO     ->  inequality
 R       ->  A'
 R       ->  A' R'
 R'      ->  RO R
